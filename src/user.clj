@@ -6,15 +6,19 @@
    (io.helidon.http.sse SseEvent)
    (io.helidon.webserver.sse SseSink)))
 
-(defn handler [{:keys [:s-exp.hirundo.http.request/server-response] :as req}]
-  (let [sse-sink (.sink server-response SseSink/TYPE)]
-    (doseq [i (range 10)]
-      (.emit sse-sink (SseEvent/create "Hello!"))
-      (Thread/sleep 500))
-    (.close sse-sink))
-  {:status 200
-   :headers {"content-type" "text/event-stream"}
-   })
+(defn handler [{:keys [:s-exp.hirundo.http.request/server-response request-method] :as req}]
+  (case request-method
+    :get
+    {:status 200
+     :headers {"content-type" "text/html;charset=utf-8"}
+     :body (slurp "index.html")}
+
+    :post
+    (let [sse-sink (.sink server-response SseSink/TYPE)]
+      (doseq [i (range 10)]
+        (.emit sse-sink (SseEvent/create "Hello!"))
+        (Thread/sleep 500))
+      (.close sse-sink))))
 
 (defonce state (atom {}))
 
