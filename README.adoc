@@ -1,0 +1,3 @@
+= Datastar Demo
+
+A simple Clojure demo of https://data-star.dev/ in action!
