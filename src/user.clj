@@ -29,7 +29,8 @@
   (let [sse-sink (.sink server-response SseSink/TYPE)]
     (->HelidonSseGenerator sse-sink)))
 
-(def game-state (atom {:status "Awaiting players"}))
+(def game-state (atom {:status "Awaiting players"
+                       :players []}))
 
 (def message-queue (LinkedBlockingQueue/new))
 
@@ -46,31 +47,49 @@
     (let [sse-gen (sse-generator req)]
       (log/infof "POST")
       (while true
-        (d*/merge-fragments!
-         sse-gen
-         [(str
-           (h/html [:main#main
-                    [:h1#title "Tic Tac Toe Multiplayer with Datastar! ⭐️"]
-                    [:h2 "Status: " (get @game-state :status)]
+        (let [game-state (deref game-state)] ; freeze the game state
+          (d*/merge-fragments!
+           sse-gen
+           [(str
+             (h/html [:main#main
+                      (case (:status game-state)
+                        "Start game"
+                        [:h1 (get-in game-state [:players 0]) " versus " (get-in game-state [:players 1]) "!"]
+                        [:h1#title "Tic Tac Toe Multiplayer with Datastar! ⭐️"])
 
-                    [:div.grid
-                     (for [cell (map inc (range 9))]
-                       [:button {:id cell}])]
-                    (case (:status @game-state)
-                      "Awaiting players"
-                      [:div {:data-signals "{player: '', action: ''}"}
-                       [:label "Player, enter your name: "]
-                       [:input {:type "text" :data-bind "player"}]
-                       [:button {:data-on-click "@setAll('action','join');@put(window.location.pathname)"} "Join"]])
-                    [:h3 "Game frame:" (swap! counter inc)]]))])
+                      [:h2 "Status: " (get game-state :status)]
+
+                      [:h3 "Players"]
+                      [:ol
+                       (for [player (:players game-state)]
+                         [:li player])]
+
+                      [:div.grid
+                       (for [cell (map inc (range 9))]
+                         [:button {:id cell}])]
+                      (case (:status game-state)
+                        "Awaiting players"
+                        [:div {:data-signals "{player: '', action: ''}"}
+                         [:label "Player, enter your name: "]
+                         [:input {:type "text" :data-bind "player"}]
+                         [:button {:data-on-click "@setAll('action','join');@put(window.location.pathname)"} "Join"]]
+                        [:div "Error: Unknown State: " (:status game-state)])
+                      [:h3 "Game frame:" (swap! counter inc)]]))]))
         (.take message-queue))
       (p/close-sse! sse-gen))
 
     :put
     (let [body (:body req)
-          {:strs [symbol message] :as json} (json/read-value body)]
-      (println json)
-      (println "Message was" message)
+          json (json/read-value body)]
+      ;; We must now update the game state and status
+      (clojure.pprint/pprint json)
+      (case (:status @game-state)
+        "Awaiting players"
+        (let [player (get json "player")]
+          (swap! game-state update :players conj player)
+          (when (= (count (:players @game-state)) 2)
+            (swap! game-state assoc :status "Start game"))))
+      ;; Trigger the game to re-render
       (.put message-queue :ok)
       {:status 200})))
 
