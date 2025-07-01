@@ -1,85 +1,94 @@
 <!DOCTYPE html>
 
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Datastar Tic Tac Toe</title>
     <link rel="stylesheet" href="style.css">
     <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.11/bundles/datastar.js"></script>
-</head>
-<body>
+  </head>
+  <body>
 
-  <!-- Quirk with browsers is that cache settings are per URL not per
-  URL + METHOD this means that GET and POST cache headers can mess
-  with each other. To get around this an unused query param is added
-  to the url. -->
+    <style>
+      body {
+          font-family: Arial, Helvetica, sans-serif;
+      }
 
-  <div data-on-load="@post(window.location.pathname + (window.location.search + '&u=').replace(/^&/,'?'))"></div>
+      .grid {
+          display: grid;
+          grid-template-columns: repeat(3, 100px);
+          grid-template-rows: repeat(3, 100px);
+          gap: 5px;
+          width: max-content;
+          margin: 20px auto;
+      }
 
-  <div id="foo">Loading...</div>
+      .cell {
+          font-size: 2rem;
+          text-align: center;
+          vertical-align: middle;
+      }
 
-    <h1 id="title">Tic Tac Toe Multiplayer with Datastar! ⭐️</h1>
+      #title {
+          text-align: center;
+          font-size: 24px;
+          margin-bottom: 20px;
+      }
+    </style>
 
-    <div class="grid">
-        <button id="cell1"></button>
-        <button id="cell2"></button>
-        <button id="cell3"></button>
-        <button id="cell4"></button>
-        <button id="cell5"></button>
-        <button id="cell6"></button>
-        <button id="cell7"></button>
-        <button id="cell8"></button>
-        <button id="cell9"></button>
-    </div>
+    <!-- Quirk with browsers is that cache settings are per URL not per
+         URL + METHOD this means that GET and POST cache headers can mess
+         with each other. To get around this an unused query param is added
+         to the url. -->
+    <div data-on-load="@post(window.location.pathname + (window.location.search + '&u=').replace(/^&/,'?'))"></div>
 
-    <div data-signals="{symbol: 'X', message: 'Hi there!'}">
+    <main id="main">
+      <h2>Loading<h2/>
+    </main>
 
-    <h2>Current Player: <span data-text="$symbol"></span></h2>
+    <!--
+        <div data-signals="{status: 'Loading'}">
 
-    <input type="checkbox" data-bind-symbol/>
+          <h1 id="title">Tic Tac Toe Multiplayer with Datastar! ⭐️</h1>
 
-    <label for="symbol">Toggle Symbol</label>
+          <h2>Status: <span data-text="$status"></span></h2>
 
-    <br>
+          <div class="grid">
+            <button id="cell1"></button>
+            <button id="cell2"></button>
+            <button id="cell3"></button>
+            <button id="cell4"></button>
+            <button id="cell5"></button>
+            <button id="cell6"></button>
+            <button id="cell7"></button>
+            <button id="cell8"></button>
+            <button id="cell9"></button>
+          </div>
 
-    <input data-bind="message" type="message">
+          <div data-signals="{symbol: 'X', message: 'Hi there!'}">
 
-    <button data-on-click="@put(window.location.pathname)">Click Me!</button>
+            <h2>Current Player: <span data-text="$symbol"></span></h2>
 
-    </div>
-</body>
+            <input type="checkbox" data-bind-symbol/>
+
+            <label for="symbol">Toggle Symbol</label>
+
+            <br>
+
+            <input data-bind="message" type="message">
+
+            <button data-on-click="@put(window.location.pathname)">Click Me!</button>
+
+          </div>
+        </div>
+        -->
+  </body>
 </html>
 
-<style>
-body {
-    font-family: Arial, Helvetica, sans-serif;
-}
-
-.grid {
-    display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-template-rows: repeat(3, 100px);
-    gap: 5px;
-    width: max-content;
-    margin: 20px auto;
-}
-
-.cell {
-    font-size: 2rem;
-    text-align: center;
-    vertical-align: middle;
-  }
-
-#title {
-    text-align: center;
-    font-size: 24px;
-    margin-bottom: 20px;
-}
-</style>
 
 <!-- <div data-signals="{name: 'Connie'}">
 
-<h1>Hello <span data-text="$name"></span>!</h1>
+     <h1>Hello <span data-text="$name"></span>!</h1>
 
-<input data-bind="name" type="text"> -->
+     <input data-bind="name" type="text"> -->

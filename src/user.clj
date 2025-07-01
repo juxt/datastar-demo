@@ -1,12 +1,15 @@
 (ns user
   (:require
    clojure.pprint
+   [clojure.tools.logging :as log]
    [clojure.string :as str]
+   [hiccup2.core :as h]
    [jsonista.core :as json]
    [s-exp.hirundo :as hirundo]
    [starfederation.datastar.clojure.protocols :as p]
    [starfederation.datastar.clojure.api :as d*])
   (:import
+   (java.util.concurrent LinkedBlockingQueue)
    (io.helidon.http.sse SseEvent)
    (io.helidon.webserver.sse SseSink)))
 
@@ -26,6 +29,12 @@
   (let [sse-sink (.sink server-response SseSink/TYPE)]
     (->HelidonSseGenerator sse-sink)))
 
+(def game-state (atom {:status "Awaiting players"}))
+
+(def message-queue (LinkedBlockingQueue/new))
+
+(def counter (atom 0))
+
 (defn handler [{:keys [request-method] :as req}]
   (case request-method
     :get
@@ -35,9 +44,26 @@
 
     :post
     (let [sse-gen (sse-generator req)]
-      (doseq [i (reverse (range 10))]
-        (d*/merge-fragments! sse-gen [(format "<div id='foo'>Starting in %d seconds !!!</div>" i)])
-        (Thread/sleep 1000))
+      (log/infof "POST")
+      (while true
+        (d*/merge-fragments!
+         sse-gen
+         [(str
+           (h/html [:main#main
+                    [:h1#title "Tic Tac Toe Multiplayer with Datastar! ⭐️"]
+                    [:h2 "Status: " (get @game-state :status)]
+
+                    [:div.grid
+                     (for [cell (map inc (range 9))]
+                       [:button {:id cell}])]
+                    (case (:status @game-state)
+                      "Awaiting players"
+                      [:div {:data-signals "{player: '', action: ''}"}
+                       [:label "Player, enter your name: "]
+                       [:input {:type "text" :data-bind "player"}]
+                       [:button {:data-on-click "@setAll('action','join');@put(window.location.pathname)"} "Join"]])
+                    [:h3 "Game frame:" (swap! counter inc)]]))])
+        (.take message-queue))
       (p/close-sse! sse-gen))
 
     :put
@@ -45,7 +71,7 @@
           {:strs [symbol message] :as json} (json/read-value body)]
       (println json)
       (println "Message was" message)
-
+      (.put message-queue :ok)
       {:status 200})))
 
 (defonce state (atom {}))
