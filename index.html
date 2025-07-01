@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datastar Tic Tac Toe</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.11/bundles/datastar.js"></script>
+</head>
+<body>
+
+    <h1 id="title">Tic Tac Toe Multiplayer with Datastar! ⭐️</h1>
+
+    <div class="grid">
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+        <button class="cell"></button>
+    </div>
+
+    <div data-signals="{symbol: 'X'}">
+
+    <h2>Current Player: <span data-text="$symbol"></span></h2>
+
+    <input type="checkbox" data-bind-symbol/> 
+
+    <label for="isCross">Toggle Symbol</label>
+
+</body>
+</html>
+
+<!-- <div data-signals="{name: 'Connie'}">
+
+<h1>Hello <span data-text="$name"></span>!</h1>
+
+<input data-bind="name" type="text"> -->
