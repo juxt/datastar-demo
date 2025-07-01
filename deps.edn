@@ -24,5 +24,7 @@
    :git/sha "8b849864109e7a5dd4da40b00269125837611ac2"
    :deps/root "sdk/clojure/sdk"}
 
-  hiccup/hiccup {:mvn/version "2.0.0-RC5"}}
+  hiccup/hiccup {:mvn/version "2.0.0-RC5"}
+  metosin/jsonista {:mvn/version "0.2.7"}
+  }
  }

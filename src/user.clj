@@ -2,6 +2,7 @@
   (:require
    clojure.pprint
    [clojure.string :as str]
+   [jsonista.core :as json]
    [s-exp.hirundo :as hirundo]
    [starfederation.datastar.clojure.protocols :as p]
    [starfederation.datastar.clojure.api :as d*])
@@ -42,8 +43,11 @@
       (p/close-sse! sse-gen))
 
     :put
-    (let [body (:body req)]
-      (println (format "Received: %s\n" (slurp body)))
+    (let [body (:body req)
+          {:strs [symbol message] :as json} (json/read-value body)]
+      (println json)
+      (println "Message was" message)
+
       {:status 200})))
 
 (defonce state (atom {}))

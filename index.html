@@ -32,13 +32,17 @@
         <button class="cell"></button>
     </div>
 
-    <div data-signals="{symbol: 'X'}">
+    <div data-signals="{symbol: 'X', message: 'Hi there!'}">
 
     <h2>Current Player: <span data-text="$symbol"></span></h2>
 
     <input type="checkbox" data-bind-symbol/>
 
     <label for="isCross">Toggle Symbol</label>
+
+    <br>
+
+    <input data-bind="message" type="message">
 
     <button data-on-click="@put(window.location.pathname)">Click Me!</button>
 
