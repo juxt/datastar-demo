@@ -32,7 +32,15 @@
 (def game-state (atom {:status "Awaiting players"
                        :players []}))
 
-(def message-queue (LinkedBlockingQueue/new))
+(def subscribers (atom #{}))
+(defn subscribe []
+  (let [queue (java.util.concurrent.LinkedBlockingQueue.)]
+    (swap! subscribers conj queue)
+    queue))
+
+(defn publish [msg]
+  (doseq [sub @subscribers]
+    (.put sub msg)))
 
 (def counter (atom 0))
 
@@ -44,7 +52,8 @@
      :body (slurp "index.html")}
 
     :post
-    (let [sse-gen (sse-generator req)]
+    (let [sse-gen (sse-generator req)
+          subscription (subscribe)]
       (log/infof "POST")
       (while true
         (let [game-state (deref game-state)] ; freeze the game state
@@ -75,7 +84,7 @@
                          [:button {:data-on-click "@setAll('action','join');@put(window.location.pathname)"} "Join"]]
                         [:div "Error: Unknown State: " (:status game-state)])
                       [:h3 "Game frame:" (swap! counter inc)]]))]))
-        (.take message-queue))
+        (.take subscription))
       (p/close-sse! sse-gen))
 
     :put
@@ -90,7 +99,7 @@
           (when (= (count (:players @game-state)) 2)
             (swap! game-state assoc :status "Start game"))))
       ;; Trigger the game to re-render
-      (.put message-queue :ok)
+      (publish :ok)
       {:status 200})))
 
 (defonce state (atom {}))
