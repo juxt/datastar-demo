@@ -12,9 +12,12 @@
                                   :exclusions [org.slf4j/slf4j-api]}
   net.logstash.logback/logstash-logback-encoder {:mvn/version "7.4"}
 
-  juxt/hirundo
+  mpenet/hirundo
   {:git/url "https://github.com/juxt/hirundo"
    :sha "3426e6cbf924d7b32281bb1a282a0c56afcd0945"}
+
+  ;; Add SSE dependency
+  io.helidon.webserver/helidon-webserver-sse {:mvn/version "4.2.0"}
 
   datastar/sdk
   {:git/url "https://github.com/starfederation/datastar/"
