@@ -1,20 +1,21 @@
 (ns user
   (:require [s-exp.hirundo :as hirundo]))
 
-(def state (atom {}))
+(defn handler [req]
+  {:status 201
+   :headers {"content-type" "text/event-stream"}
+   :body "Goodbye World!!!!\r\n"})
+
+(defonce state (atom {}))
 
 (defn server []
   (hirundo/start!
    { ;; Must be using the graphcentric hirundo fork
-    :http-handler
-    (fn [req]
-      {:status 200
-       :header {"content-type" "text/plain;charset=utf-8"}
-       :body "Hello World!\r\n"})
+    :http-handler #'handler
     :port 9090}))
 
 (defn start []
-  (swap! state assoc :server (server)))
+  (swap! state update :server (fn [existing] (if existing existing (server)))))
 
 (defn stop []
-  (swap! state update :server (fn [server] (.stop server) nil)))
+  (swap! state update :server (fn [s] (when s (.stop s)) nil)))
