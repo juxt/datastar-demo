@@ -25,6 +25,8 @@
   (let [sse-sink (.sink server-response SseSink/TYPE)]
     (->HelidonSseGenerator sse-sink)))
 
+
+
 (defn handler [{:keys [request-method] :as req}]
   (case request-method
     :get
@@ -37,7 +39,12 @@
       (doseq [i (reverse (range 10))]
         (d*/merge-fragments! sse-gen [(format "<div id='foo'>Starting in %d seconds !!!</div>" i)])
         (Thread/sleep 1000))
-      (p/close-sse! sse-gen))))
+      (p/close-sse! sse-gen))
+
+    :put
+    (let [body (:body req)]
+      (println (format "Received: %s\n" (slurp body)))
+      {:status 200})))
 
 (defonce state (atom {}))
 
