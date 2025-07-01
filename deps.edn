@@ -1,0 +1,25 @@
+{:paths ["src"]
+ :deps
+ {
+  org.clojure/clojure {:mvn/version "1.12.0"}
+
+  ;; Logging
+  org.clojure/tools.logging {:mvn/version "1.2.4"}
+  org.slf4j/jcl-over-slf4j {:mvn/version "2.0.7"}
+  org.slf4j/jul-to-slf4j {:mvn/version "2.0.7"}
+  org.slf4j/log4j-over-slf4j {:mvn/version "2.0.7"}
+  ch.qos.logback/logback-classic {:mvn/version "1.4.8"
+                                  :exclusions [org.slf4j/slf4j-api]}
+  net.logstash.logback/logstash-logback-encoder {:mvn/version "7.4"}
+
+  juxt/hirundo
+  {:git/url "https://github.com/juxt/hirundo"
+   :sha "3426e6cbf924d7b32281bb1a282a0c56afcd0945"}
+
+  datastar/sdk
+  {:git/url "https://github.com/starfederation/datastar/"
+   :git/sha "8b849864109e7a5dd4da40b00269125837611ac2"
+   :deps/root "sdk/clojure/sdk"}
+
+  hiccup/hiccup {:mvn/version "2.0.0-RC5"}}
+ }
