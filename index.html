@@ -10,6 +10,16 @@
 </head>
 <body>
 
+  <!-- Quirk with browsers is that cache settings are per URL not per
+  URL + METHOD this means that GET and POST cache headers can mess
+  with each other. To get around this an unused query param is added
+  to the url. -->
+  <div data-on-load="@post(window.location.pathname + (window.location.search + '&u=').replace(/^&/,'?'))"></div>
+
+  <div id="foo">Loading...</div>
+
+
+
     <h1 id="title">Tic Tac Toe Multiplayer with Datastar! ⭐️</h1>
 
     <div class="grid">
@@ -28,7 +38,7 @@
 
     <h2>Current Player: <span data-text="$symbol"></span></h2>
 
-    <input type="checkbox" data-bind-symbol/> 
+    <input type="checkbox" data-bind-symbol/>
 
     <label for="isCross">Toggle Symbol</label>
 
