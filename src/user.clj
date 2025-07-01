@@ -26,8 +26,6 @@
   (let [sse-sink (.sink server-response SseSink/TYPE)]
     (->HelidonSseGenerator sse-sink)))
 
-
-
 (defn handler [{:keys [request-method] :as req}]
   (case request-method
     :get

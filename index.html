@@ -14,6 +14,7 @@
   URL + METHOD this means that GET and POST cache headers can mess
   with each other. To get around this an unused query param is added
   to the url. -->
+
   <div data-on-load="@post(window.location.pathname + (window.location.search + '&u=').replace(/^&/,'?'))"></div>
 
   <div id="foo">Loading...</div>
@@ -21,15 +22,15 @@
     <h1 id="title">Tic Tac Toe Multiplayer with Datastar! ⭐️</h1>
 
     <div class="grid">
-        <button class="cell"></button>
-        <button class="cell"></button>
-        <button class="cell"></button>
-        <button class="cell"></button>
-        <button class="cell"></button>
-        <button class="cell"></button>
-        <button class="cell"></button>
-        <button class="cell"></button>
-        <button class="cell"></button>
+        <button id="cell1"></button>
+        <button id="cell2"></button>
+        <button id="cell3"></button>
+        <button id="cell4"></button>
+        <button id="cell5"></button>
+        <button id="cell6"></button>
+        <button id="cell7"></button>
+        <button id="cell8"></button>
+        <button id="cell9"></button>
     </div>
 
     <div data-signals="{symbol: 'X', message: 'Hi there!'}">
@@ -38,7 +39,7 @@
 
     <input type="checkbox" data-bind-symbol/>
 
-    <label for="isCross">Toggle Symbol</label>
+    <label for="symbol">Toggle Symbol</label>
 
     <br>
 
@@ -49,6 +50,33 @@
     </div>
 </body>
 </html>
+
+<style>
+body {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 5px;
+    width: max-content;
+    margin: 20px auto;
+}
+
+.cell {
+    font-size: 2rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+#title {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+</style>
 
 <!-- <div data-signals="{name: 'Connie'}">
 
