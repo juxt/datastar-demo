@@ -2,7 +2,7 @@
   (:require
    clojure.pprint
    [clojure.tools.logging :as log]
-   [clojure.string :as str]
+   [clojure.string :as str] 
    [hiccup2.core :as h]
    [ring.middleware.session :refer [wrap-session]]
    [jsonista.core :as json]
@@ -32,7 +32,6 @@
 
 (def game-state (atom {:status "Awaiting players"
                        :players []
-                       :current-player nil
                        :turn "X"
                        :turnSession nil
                        :frame 0
@@ -76,11 +75,15 @@
                          (get-in state [:players 0 :name]) " versus " (get-in state [:players 1 :name]) "!"]
                         [:h1#title "Tic Tac Toe Multiplayer with Datastar! ⭐️"])
 
-                      [:h2 "Status: " (get state :status)]
+                      [:h2 (get state :status)]
 
-                      [:h2 "You are " (player-name-by-id (:players state) (:id session))]
-
-                      [:h2 "Current turn: " (player-name-by-id (:players state) (:turnSession state))]
+                      (if (or (= (:status state) "")
+                             (let [status (:status @game-state)]
+                               (and (string? status) (str/includes? status "wins"))))
+                        [:div
+                         [:h2 "You are " (player-name-by-id (:players state) (:id session))]
+                         [:h2 "Current turn: " (player-name-by-id (:players state) (:turnSession state))]
+                         ])
 
                       [:h3 "Players"]
                       [:ol
@@ -99,7 +102,8 @@
                          [:label "Player, enter your name: "]
                          [:input {:type "text" :data-bind "player"}]
                          [:button {:data-on-click "@setAll('action','join');@put(window.location.pathname)"} "Join"]]
-                        [:div "Error: Unknown State: " (:status state)])
+                        [:div])
+                      
                       [:h3 "Game frame:" (:frame (swap! game-state update :frame inc))]
 
                       [:h2 "Debug"]
@@ -125,23 +129,40 @@
       (case action
         "move"
         (do
-          (let [current-player (:current-player @game-state)
-                board (:board @game-state)
+          (let [board (:board @game-state)
                 turn (:turn @game-state)]
             (when (and (nil? (get board cell))
-                       (= (:turnSession @game-state) session-id))
-              
+                       (= (:turnSession @game-state) session-id)
+                       (let [status (:status @game-state)]
+                         (not (and (string? status) (str/includes? status "wins")))))
+
               (swap! game-state update :board assoc cell turn)
+
+              ; win check
+              
+              (let [updated-board (:board @game-state)]
+                (let [winning-combinations [[1 2 3] [4 5 6] [7 8 9] 
+                                            [1 4 7] [2 5 8] [3 6 9] 
+                                            [1 5 9] [3 5 7]]]
+                  (doseq [comb winning-combinations]
+                    (when (let [a (get updated-board (first comb))
+                                b (get updated-board (second comb))
+                                c (get updated-board (last comb))]
+                            (or (and (= a "X") (= b "X") (= c "X"))
+                                (and (= a "O") (= b "O") (= c "O"))))
+                      (if (= turn "X")
+                        (swap! game-state assoc :status (str "Player " (get-in @game-state [:players 0 :name]) " wins!"))
+                        (swap! game-state assoc :status (str "Player " (get-in @game-state [:players 1 :name]) " wins!")))))))
+
               (if (= turn "X")
                 (swap! game-state assoc :turn "O")
                 (swap! game-state assoc :turn "X"))
-              
+
               (swap! game-state assoc :turnSession
                      (if (= turn "X")
                        (get-in @game-state [:players 1 :id])
                        (get-in @game-state [:players 0 :id])))))
-          
-          (publish :ok))
+              (publish :ok))
         "join"
         (do (case (:status @game-state)
               "Awaiting players"
