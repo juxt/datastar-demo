@@ -31,6 +31,7 @@
 
 (def game-state (atom {:status "Awaiting players"
                        :players []
+                       :current-player nil
                        :board (vec (repeat 9 nil))}))
 
 (def subscribers (atom #{}))
@@ -44,10 +45,6 @@
     (.put sub msg)))
 
 (def counter (atom 0))
-
-(def currentPlayer (atom nil))
-
-(def turn (atom 0))
 
 (defn handler [{:keys [request-method] :as req}]
   (case request-method
@@ -80,12 +77,12 @@
                        (for [player (:players game-state)]
                          [:li player])]
 
-                      [:div.grid
+                      [:div.grid {:data-signals "{cell: '', action: ''}"}
                        (for [cell (map inc (range 9))]
                          [:button {:id cell
-                                   :data-on-click (str "@set('cell'," cell ");@set('action','move');@put(window.location.pathname)")}
+                                   :data-on-click (str "$cell=" cell ";@setAll('action', 'move');@put(window.location.pathname)")}
                           (get (:board game-state) cell)])]
-                      
+
                       (case (:status game-state)
                         "Awaiting players"
                         [:div {:data-signals "{player: '', action: '', cell: ''}"}
@@ -100,20 +97,26 @@
     :put
     (let [body (:body req)
           json (json/read-value body)
+          cell (get json "cell")
           action (get json "action")]
-      
+
       ;; We must now update the game state and status
-      (clojure.pprint/pprint json) 
-      (case (:status @game-state)
-        "Awaiting players"
-        (let [player (get json "player")]
-          (swap! currentPlayer (player)) 
-          (swap! game-state update :players conj player)
-          (when (= (count (:players @game-state)) 2)
-            (swap! game-state assoc :status "Start game"))))
-      ;; Trigger the game to re-render
-      (publish :ok)
-      
+      (clojure.pprint/pprint json)
+
+      (case action
+        "move"
+        (do)
+        "join"
+        (do (case (:status @game-state)
+            "Awaiting players"
+            (let [player (get json "player")]
+              (swap! game-state assoc :current-player player)
+              (swap! game-state update :players conj player)
+              (when (= (count (:players @game-state)) 2)
+                (swap! game-state assoc :status "Start game"))))
+          ;; Trigger the game to re-render
+          (publish :ok)))
+
       {:status 200})))
 
 (defonce state (atom {}))
