@@ -32,6 +32,7 @@
 (def game-state (atom {:status "Awaiting players"
                        :players []
                        :current-player nil
+                       :turn "X"
                        :board (vec (repeat 9 nil))}))
 
 (def subscribers (atom #{}))
@@ -105,17 +106,26 @@
 
       (case action
         "move"
-        (do)
+        (do
+          (let [current-player (:current-player @game-state)
+                board (:board @game-state)
+                turn (:turn @game-state)]
+            (when  (nil? (get board cell))
+              (swap! game-state update :board assoc cell turn)
+              (if (= turn "X")
+                (swap! game-state assoc :turn "O")
+                (swap! game-state assoc :turn "X"))))
+          (publish :ok))
         "join"
         (do (case (:status @game-state)
-            "Awaiting players"
-            (let [player (get json "player")]
-              (swap! game-state assoc :current-player player)
-              (swap! game-state update :players conj player)
-              (when (= (count (:players @game-state)) 2)
-                (swap! game-state assoc :status "Start game"))))
-          ;; Trigger the game to re-render
-          (publish :ok)))
+              "Awaiting players"
+              (let [player (get json "player")]
+                (swap! game-state assoc :current-player player)
+                (swap! game-state update :players conj player)
+                (when (= (count (:players @game-state)) 2)
+                  (swap! game-state assoc :status "Start game"))))
+            ;; Trigger the game to re-render
+            (publish :ok)))
 
       {:status 200})))
 
