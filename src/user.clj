@@ -4,6 +4,7 @@
    [clojure.tools.logging :as log]
    [clojure.string :as str]
    [hiccup2.core :as h]
+   [ring.middleware.session :refer [wrap-session]]
    [jsonista.core :as json]
    [s-exp.hirundo :as hirundo]
    [starfederation.datastar.clojure.protocols :as p]
@@ -46,12 +47,14 @@
   (doseq [sub @subscribers]
     (.put sub msg)))
 
-(defn handler [{:keys [request-method] :as req}]
+(defn handler [{:keys [request-method session] :as req}]
   (case request-method
     :get
-    {:status 200
-     :headers {"content-type" "text/html;charset=utf-8"}
-     :body (slurp "index.html")}
+    (cond-> {:status 200
+             :headers {"content-type" "text/html;charset=utf-8"}
+             :body (slurp "index.html")}
+      (nil? (:id session))
+      (assoc :session {:id (random-uuid)}))
 
     :post
     (let [sse-gen (sse-generator req)
@@ -93,6 +96,7 @@
                       [:h3 "Game frame:" (:frame (swap! game-state update :frame inc))]
 
                       [:h2 "Debug"]
+                      [:p "session is" (:id session)]
                       [:ul
                        (for [sub @subscribers]
                          [:li (pr-str sub)])]]))]))
@@ -108,6 +112,7 @@
 
       ;; We must now update the game state and status
       (clojure.pprint/pprint json)
+      (println "PUT from session" (:id session))
 
       (case action
         "move"
@@ -139,7 +144,7 @@
 (defn server []
   (hirundo/start!
    {;; Must be using the graphcentric hirundo fork
-    :http-handler #'handler
+    :http-handler (wrap-session #'handler)
     :port 9090}))
 
 (defn start []
