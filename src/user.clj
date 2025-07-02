@@ -30,7 +30,8 @@
     (->HelidonSseGenerator sse-sink)))
 
 (def game-state (atom {:status "Awaiting players"
-                       :players []}))
+                       :players []
+                       :board (vec (repeat 9 nil))}))
 
 (def subscribers (atom #{}))
 (defn subscribe []
@@ -43,6 +44,10 @@
     (.put sub msg)))
 
 (def counter (atom 0))
+
+(def currentPlayer (atom nil))
+
+(def turn (atom 0))
 
 (defn handler [{:keys [request-method] :as req}]
   (case request-method
@@ -68,6 +73,8 @@
 
                       [:h2 "Status: " (get game-state :status)]
 
+                      [:h2 "Current Player: " (get game-state :current-player)]
+
                       [:h3 "Players"]
                       [:ol
                        (for [player (:players game-state)]
@@ -75,10 +82,13 @@
 
                       [:div.grid
                        (for [cell (map inc (range 9))]
-                         [:button {:id cell}])]
+                         [:button {:id cell
+                                   :data-on-click (str "@set('cell'," cell ");@set('action','move');@put(window.location.pathname)")}
+                          (get (:board game-state) cell)])]
+                      
                       (case (:status game-state)
                         "Awaiting players"
-                        [:div {:data-signals "{player: '', action: ''}"}
+                        [:div {:data-signals "{player: '', action: '', cell: ''}"}
                          [:label "Player, enter your name: "]
                          [:input {:type "text" :data-bind "player"}]
                          [:button {:data-on-click "@setAll('action','join');@put(window.location.pathname)"} "Join"]]
@@ -89,24 +99,28 @@
 
     :put
     (let [body (:body req)
-          json (json/read-value body)]
+          json (json/read-value body)
+          action (get json "action")]
+      
       ;; We must now update the game state and status
-      (clojure.pprint/pprint json)
+      (clojure.pprint/pprint json) 
       (case (:status @game-state)
         "Awaiting players"
         (let [player (get json "player")]
+          (swap! currentPlayer (player)) 
           (swap! game-state update :players conj player)
           (when (= (count (:players @game-state)) 2)
             (swap! game-state assoc :status "Start game"))))
       ;; Trigger the game to re-render
       (publish :ok)
+      
       {:status 200})))
 
 (defonce state (atom {}))
 
 (defn server []
   (hirundo/start!
-   { ;; Must be using the graphcentric hirundo fork
+   {;; Must be using the graphcentric hirundo fork
     :http-handler #'handler
     :port 9090}))
 
