@@ -34,6 +34,7 @@
                        :players []
                        :current-player nil
                        :turn "X"
+                       :turnSession nil
                        :frame 0
                        :board (vec (repeat 9 nil))}))
 
@@ -46,6 +47,9 @@
 (defn publish [msg]
   (doseq [sub @subscribers]
     (.put sub msg)))
+
+(defn player-name-by-id [players session-id]
+  (some (fn [{:keys [id name]}] (when (= id session-id) name)) players))
 
 (defn handler [{:keys [request-method session] :as req}]
   (case request-method
@@ -68,17 +72,20 @@
              (h/html [:main#main
                       (case (:status state)
                         "Start game"
-                        [:h1 (get-in state [:players 0]) " versus " (get-in state [:players 1]) "!"]
+                        [:h1
+                         (get-in state [:players 0 :name]) " versus " (get-in state [:players 1 :name]) "!"]
                         [:h1#title "Tic Tac Toe Multiplayer with Datastar! ⭐️"])
 
                       [:h2 "Status: " (get state :status)]
 
-                      [:h2 "Current Player: " (get state :current-player)]
+                      [:h2 "You are " (player-name-by-id (:players state) (:id session))]
+
+                      [:h2 "Current turn: " (player-name-by-id (:players state) (:turnSession state))]
 
                       [:h3 "Players"]
                       [:ol
-                       (for [player (:players state)]
-                         [:li player])]
+                       (for [{:keys [id name]} (:players state)]
+                         [:li name])]
 
                       [:div.grid {:data-signals "{cell: '', action: ''}"}
                        (for [cell (map inc (range 9))]
@@ -108,10 +115,11 @@
     (let [body (:body req)
           json (json/read-value body)
           cell (get json "cell")
-          action (get json "action")]
+          action (get json "action")
+          session-id (:id session)]
 
       ;; We must now update the game state and status
-      (clojure.pprint/pprint json)
+      (clojure.pprint/pprint json) 
       (println "PUT from session" (:id session))
 
       (case action
@@ -120,22 +128,33 @@
           (let [current-player (:current-player @game-state)
                 board (:board @game-state)
                 turn (:turn @game-state)]
-            (when  (nil? (get board cell))
+            (when (and (nil? (get board cell))
+                       (= (:turnSession @game-state) session-id))
+              
               (swap! game-state update :board assoc cell turn)
               (if (= turn "X")
                 (swap! game-state assoc :turn "O")
-                (swap! game-state assoc :turn "X"))))
+                (swap! game-state assoc :turn "X"))
+              
+              (swap! game-state assoc :turnSession
+                     (if (= turn "X")
+                       (get-in @game-state [:players 1 :id])
+                       (get-in @game-state [:players 0 :id])))))
+          
           (publish :ok))
         "join"
         (do (case (:status @game-state)
               "Awaiting players"
               (let [player (get json "player")]
-                (swap! game-state assoc :current-player player)
-                (swap! game-state update :players conj player)
+                (println player)
+                (swap! game-state update :players conj {:id session-id :name player})
+                (when (= (count (:players @game-state)) 1)
+                  (swap! game-state assoc :turnSession session-id))
                 (when (= (count (:players @game-state)) 2)
                   (swap! game-state assoc :status "Start game"))))
             ;; Trigger the game to re-render
-            (publish :ok)))
+            (publish :ok)
+            (clojure.pprint/pprint @game-state)))
 
       {:status 200})))
 
