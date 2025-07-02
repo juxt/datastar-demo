@@ -33,6 +33,7 @@
                        :players []
                        :current-player nil
                        :turn "X"
+                       :frame 0
                        :board (vec (repeat 9 nil))}))
 
 (def subscribers (atom #{}))
@@ -44,8 +45,6 @@
 (defn publish [msg]
   (doseq [sub @subscribers]
     (.put sub msg)))
-
-(def counter (atom 0))
 
 (defn handler [{:keys [request-method] :as req}]
   (case request-method
@@ -59,39 +58,45 @@
           subscription (subscribe)]
       (log/infof "POST")
       (while true
-        (let [game-state (deref game-state)] ; freeze the game state
+        (let [state (deref game-state)] ; freeze the game state
           (d*/merge-fragments!
            sse-gen
            [(str
              (h/html [:main#main
-                      (case (:status game-state)
+                      (case (:status state)
                         "Start game"
-                        [:h1 (get-in game-state [:players 0]) " versus " (get-in game-state [:players 1]) "!"]
+                        [:h1 (get-in state [:players 0]) " versus " (get-in state [:players 1]) "!"]
                         [:h1#title "Tic Tac Toe Multiplayer with Datastar! ⭐️"])
 
-                      [:h2 "Status: " (get game-state :status)]
+                      [:h2 "Status: " (get state :status)]
 
-                      [:h2 "Current Player: " (get game-state :current-player)]
+                      [:h2 "Current Player: " (get state :current-player)]
 
                       [:h3 "Players"]
                       [:ol
-                       (for [player (:players game-state)]
+                       (for [player (:players state)]
                          [:li player])]
 
                       [:div.grid {:data-signals "{cell: '', action: ''}"}
                        (for [cell (map inc (range 9))]
                          [:button {:id cell
                                    :data-on-click (str "$cell=" cell ";@setAll('action', 'move');@put(window.location.pathname)")}
-                          (get (:board game-state) cell)])]
+                          (get (:board state) cell)])]
 
-                      (case (:status game-state)
+                      (case (:status state)
                         "Awaiting players"
                         [:div {:data-signals "{player: '', action: '', cell: ''}"}
                          [:label "Player, enter your name: "]
                          [:input {:type "text" :data-bind "player"}]
                          [:button {:data-on-click "@setAll('action','join');@put(window.location.pathname)"} "Join"]]
-                        [:div "Error: Unknown State: " (:status game-state)])
-                      [:h3 "Game frame:" (swap! counter inc)]]))]))
+                        [:div "Error: Unknown State: " (:status state)])
+                      [:h3 "Game frame:" (:frame (swap! game-state update :frame inc))]
+
+                      [:h2 "Debug"]
+                      [:ul
+                       (for [sub @subscribers]
+                         [:li (pr-str sub)])]]))]))
+
         (.take subscription))
       (p/close-sse! sse-gen))
 
