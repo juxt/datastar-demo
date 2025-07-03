@@ -21,13 +21,19 @@
 
   datastar/sdk
   {:git/url "https://github.com/starfederation/datastar/"
-   :git/sha "8b849864109e7a5dd4da40b00269125837611ac2"
+   :git/sha "212acf64ef26fce3a2bdff78692156eac82d51ad"
    :deps/root "sdk/clojure/sdk"}
+
+  datastar/ring
+  {:git/url "https://github.com/starfederation/datastar/"
+   :git/sha "212acf64ef26fce3a2bdff78692156eac82d51ad"
+   :deps/root "sdk/clojure/adapter-ring"}
+
+  ring/ring-core {:mvn/version "1.14.2"}
+  ring/ring-jetty-adapter {:mvn/version "1.14.2"}
 
   hiccup/hiccup {:mvn/version "2.0.0-RC5"}
   metosin/jsonista {:mvn/version "0.2.7"}
-
-  ring/ring-core {:mvn/version "1.13.0"}
 
   }
  }
